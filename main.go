@@ -9,6 +9,7 @@ import (
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/connection"
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/service"
 	_ "github.com/lib/pq"
+	gtrace "github.com/moxiaomomo/grpc-jaeger"
 	"google.golang.org/grpc"
 	"k8s.io/klog"
 )
@@ -33,7 +34,17 @@ func main() {
 
 	svc := service.New(db, listener)
 
-	server := grpc.NewServer()
+	// init tracer
+	var servOpts []grpc.ServerOption
+	tracer, _, err := gtrace.NewJaegerTracer("fightServer", "127.0.0.1:6831")
+	if err != nil {
+		log.Fatalf("new tracer err: %v", err)
+	}
+	if tracer != nil {
+		servOpts = append(servOpts, gtrace.ServerOption(tracer))
+	}
+	server := grpc.NewServer(servOpts...)
+
 	fight.RegisterFightSvcServer(server, svc)
 
 	lis, err := net.Listen("tcp", ":"+port)
