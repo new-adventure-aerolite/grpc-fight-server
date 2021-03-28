@@ -6,8 +6,8 @@ CREATE TABLE Hero (
     Blood int
 );
 
-INSERT INTO Hero VALUES ('张无忌', '武功：九阳神功，乾坤大挪移，圣火令神功', 20, 10, 100);
-INSERT INTO Hero VALUES ('韦小宝', '武功： 轻功, 神行百变，大擒拿手', 10, 30, 100);
+INSERT INTO Hero VALUES ('Charlie', 'This is hero Charlie, coll!', 20, 10, 100);
+INSERT INTO Hero VALUES ('James', 'This is hero James, cool', 10, 30, 100);
 
 
 CREATE TABLE Boss (
@@ -19,8 +19,8 @@ CREATE TABLE Boss (
     Level int UNIQUE
 );
 
-INSERT INTO Boss VALUES ('东方不败','武功：葵花宝典', 20, 5, 100, 1);
-INSERT INTO Boss VALUES ('玄冥二老','武功：玄冥神掌', 15, 10, 100, 2);
+INSERT INTO Boss VALUES ('Boss1','This is Boss1, cool!', 20, 5, 100, 1);
+INSERT INTO Boss VALUES ('Boss2','This is Boss2, cool!', 15, 10, 100, 2);
 
 CREATE TABLE Session(
     UID varchar(100) primary key,
@@ -41,7 +41,7 @@ WHERE uid = %s;
 create view as session_view
     select from cast(session, hero, boss as )
 
-INSERT INTO Session VALUES ('4','张无忌', 101, 100, 1, 0, '2021-03-11T18:25:06.1577213+08:00');
+INSERT INTO Session VALUES ('4','Charlie', 101, 100, 1, 20, '2021-03-11T18:25:06.1577213+08:00');
 
 
 CREATE VIEW session_view AS

@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/TianqiuHuang/grpc-fight-app/pd/fight"
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/connection"
@@ -25,6 +27,17 @@ func init() {
 func main() {
 	flag.Parse()
 
+	// init tracer
+	var servOpts []grpc.ServerOption
+	tracer, _, err := gtrace.NewJaegerTracer("fightServer", "127.0.0.1:6831")
+	if err != nil {
+		fmt.Printf("new tracer err: %+v\n", err)
+		os.Exit(-1)
+	}
+	if tracer != nil {
+		servOpts = append(servOpts, gtrace.ServerOption(tracer))
+	}
+
 	// hold the connection to the pg
 	db, listener, err := connection.Create(config)
 	if err != nil {
@@ -32,22 +45,14 @@ func main() {
 	}
 	defer db.Close()
 
-	svc := service.New(db, listener)
+	svc := service.New(db, listener, tracer)
 
-	// init tracer
-	var servOpts []grpc.ServerOption
-	tracer, _, err := gtrace.NewJaegerTracer("fightServer", "127.0.0.1:6831")
-	if err != nil {
-		log.Fatalf("new tracer err: %v", err)
-	}
-	if tracer != nil {
-		servOpts = append(servOpts, gtrace.ServerOption(tracer))
-	}
 	server := grpc.NewServer(servOpts...)
 
 	fight.RegisterFightSvcServer(server, svc)
 
 	lis, err := net.Listen("tcp", ":"+port)
+
 	if err != nil {
 		log.Fatalf("net.Listen err: %v", err)
 	}
