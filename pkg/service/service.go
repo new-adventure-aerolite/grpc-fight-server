@@ -12,6 +12,8 @@ import (
 	"github.com/TianqiuHuang/grpc-fight-app/pd/fight"
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/module"
 	"github.com/lib/pq"
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"k8s.io/klog"
 )
@@ -22,13 +24,15 @@ var once = sync.Once{}
 type Service struct {
 	db       *sql.DB
 	listener *pq.Listener
+	tracer   opentracing.Tracer
 }
 
 // New creates a new service.
-func New(db *sql.DB, ls *pq.Listener) *Service {
+func New(db *sql.DB, ls *pq.Listener, tracer opentracing.Tracer) *Service {
 	return &Service{
 		db:       db,
 		listener: ls,
+		tracer:   tracer,
 	}
 }
 
@@ -305,8 +309,23 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 	}
 
 	var ssView = module.SessionView{}
+
+	// simulate opentracing instrumentation of an SQL query
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span := s.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(span)
+		tags.PeerService.Set(span, "postgresql")
+		// #nosec
+		span.SetTag("sql.query", "SELECT * FROM session_view WHERE sessionid = "+id)
+		defer span.Finish()
+		ctx = opentracing.ContextWithSpan(ctx, span)
+	}
+
 	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM session_view WHERE sessionid = '%s';", id))
 	if err != nil {
+		if span := opentracing.SpanFromContext(ctx); span != nil {
+			tags.Error.Set(span, true)
+		}
 		return &fight.SessionView{}, err
 	}
 	defer rows.Close()
