@@ -16,6 +16,20 @@ import (
 	"k8s.io/klog"
 )
 
+type GameError struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+}
+
+func (err GameError) Error() string {
+	return fmt.Sprintf("code: '%d', msg: '%s'", err.Code, err.Msg)
+}
+
+var ErrNoBossExistsForLevel = GameError{
+	Msg:  "no boss exists for the level",
+	Code: 404,
+}
+
 var once = sync.Once{}
 
 // Service implements FightSvcServer interface.
@@ -442,9 +456,12 @@ func (s *Service) loadBossFromDB(level int) (module.Boss, error) {
 		return module.Boss{}, err
 	}
 	defer rows.Close()
-	rows.Next()
-	err = rows.Scan(&b.Name, &b.Detail, &b.AttackPower, &b.DefensePower, &b.Blood, &b.Level)
-	return b, err
+	if rows.Next() {
+		err = rows.Scan(&b.Name, &b.Detail, &b.AttackPower, &b.DefensePower, &b.Blood, &b.Level)
+		return b, err
+	} else {
+		return module.Boss{}, ErrNoBossExistsForLevel
+	}
 }
 
 func convertSV2FightSV(sessionView module.SessionView) *fight.SessionView {
