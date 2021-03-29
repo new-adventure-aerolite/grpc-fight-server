@@ -94,7 +94,7 @@ func (s *Service) Admin(stream fight.FightSvc_AdminServer) error {
 			}
 
 		case fight.AdminRequest_ADJUST_HERO:
-			sqlStatement := `UPDATE hero SET attackpower = attackpower*1.2, defensepower = defensepower*1.2`
+			sqlStatement := `UPDATE hero SET attackpower = attackpower*1.2, defensepower = defensepower*1.2;`
 			if _, err = s.db.Exec(sqlStatement); err != nil {
 				return err
 			}
@@ -297,7 +297,7 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 	}
 
 	var ssView = module.SessionView{}
-	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM session_view WHERE sessionid = '%s'", id))
+	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM session_view WHERE sessionid = '%s';", id))
 	if err != nil {
 		return &fight.SessionView{}, err
 	}
@@ -356,7 +356,7 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 
 // ListHeros ...
 func (s *Service) ListHeros(req *fight.ListHerosRequest, stream fight.FightSvc_ListHerosServer) error {
-	rows, err := s.db.Query("SELECT * FROM Hero")
+	rows, err := s.db.Query("SELECT * FROM Hero;")
 	if err != nil {
 		return err
 	}
@@ -377,7 +377,7 @@ func (s *Service) ListHeros(req *fight.ListHerosRequest, stream fight.FightSvc_L
 }
 
 func (s *Service) insertHero(hero *fight.Hero) (string, error) {
-	sqlStatement := `INSERT INTO hero VALUES ($1, $2, $3, $4, $5) RETURNING name`
+	sqlStatement := `INSERT INTO hero VALUES ($1, $2, $3, $4, $5) RETURNING name;`
 	var name string
 	err := s.db.QueryRow(sqlStatement,
 		hero.Name,
@@ -390,7 +390,7 @@ func (s *Service) insertHero(hero *fight.Hero) (string, error) {
 }
 
 func (s *Service) removeSessionFromDB(id string) error {
-	sqlStatement := `DELETE FROM session where uid = $1`
+	sqlStatement := "DELETE FROM session where uid = '$1';"
 	_, err := s.db.Exec(sqlStatement, id)
 	return err
 }
@@ -416,7 +416,7 @@ func (s *Service) archive(session module.Session) error {
 
 func (s *Service) loadHeroFromDB(heroName string) (module.Hero, error) {
 	var h = module.Hero{}
-	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM hero WHERE name = '%s'", heroName))
+	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM hero WHERE name = '%s';", heroName))
 	if err != nil {
 		return module.Hero{}, err
 	}
@@ -428,7 +428,7 @@ func (s *Service) loadHeroFromDB(heroName string) (module.Hero, error) {
 
 func (s *Service) loadBossFromDB(level int) (module.Boss, error) {
 	var b = module.Boss{}
-	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM boss WHERE level = %d", level))
+	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM boss WHERE level = %d;", level))
 	if err != nil {
 		return module.Boss{}, err
 	}
