@@ -283,10 +283,12 @@ func (s *Service) SelectHero(ctx context.Context, req *fight.SelectHeroRequest) 
 // LoadSession ...
 func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest) (*fight.SessionView, error) {
 	var id = req.GetId()
+	fmt.Printf("get request: 'LoadSession', id: '%s'\n", id)
 
 	sessionView, err := sessionStore.Get(id)
 	switch {
 	case err == ErrorNotFound:
+		fmt.Printf("session view is not found in the cache: id: '%s'\n", id)
 		break
 
 	case err != nil:
@@ -331,6 +333,7 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 		ssView.Boss.Level = ssView.Session.CurrentLevel
 
 	} else {
+		fmt.Printf("session view is not found in the db: id: '%s'\n", id)
 		bossLevel1, err := s.loadBossFromDB(1)
 		if err != nil {
 			return &fight.SessionView{}, err
@@ -390,7 +393,7 @@ func (s *Service) insertHero(hero *fight.Hero) (string, error) {
 }
 
 func (s *Service) removeSessionFromDB(id string) error {
-	sqlStatement := "DELETE FROM session where uid = '$1';"
+	sqlStatement := "DELETE FROM session where uid = $1;"
 	_, err := s.db.Exec(sqlStatement, id)
 	return err
 }
