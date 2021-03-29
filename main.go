@@ -51,8 +51,7 @@ func main() {
 
 	fight.RegisterFightSvcServer(server, svc)
 
-	lis, err := net.Listen("tcp", ":"+port)
-
+	lis, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {
 		log.Fatalf("net.Listen err: %v", err)
 	}

@@ -1,7 +1,7 @@
 {
-  "host": "127.0.0.1",
+  "host": "game-pg-cluster-rw.game-pg-cluster.svc.cluster.local",
   "port": 5432,
-  "username": "postgres",
-  "password": "postgres",
-  "dbname": "mydb1"
+  "username": "game",
+  "password": "password",
+  "dbname": "game"
 }
