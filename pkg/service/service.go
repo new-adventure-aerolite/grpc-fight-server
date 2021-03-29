@@ -160,8 +160,14 @@ func (s *Service) Game(ctx context.Context, req *fight.GameRequest) (*fight.Game
 		if sv.LiveBossBlood <= 0 || sv.LiveHeroBlood <= 0 {
 			return &fight.GameResponse{}, fmt.Errorf("GameOver or NextLevel")
 		}
-		sv.Session.LiveHeroBlood -= sv.Boss.AttackPower
-		sv.Session.LiveBossBlood -= sv.Hero.AttackPower
+		if sv.Hero.AttackPower >= sv.Boss.DefensePower {
+			sv.Session.LiveBossBlood -= (sv.Hero.AttackPower - sv.Boss.DefensePower)
+		}
+		if sv.Boss.AttackPower >= sv.Hero.DefensePower {
+			sv.Session.LiveHeroBlood -= (sv.Boss.AttackPower - sv.Hero.DefensePower)
+		}
+		// sv.Session.LiveHeroBlood -= sv.Boss.AttackPower
+		// sv.Session.LiveBossBlood -= sv.Hero.AttackPower
 		sv.Score += 10
 
 		var resp *fight.GameResponse
