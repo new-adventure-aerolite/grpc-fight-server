@@ -39,6 +39,17 @@ type Event struct {
 	Data   module.Hero `json:"data"`
 }
 
+func (s *Service) ClearSession(ctx context.Context, req *fight.ClearSessionRequest) (*fight.ClearSessionResponse, error) {
+	id := req.GetId()
+	sessionStore.Remove(id)
+	if err := s.removeSessionFromDB(id); err != nil {
+		return &fight.ClearSessionResponse{}, err
+	}
+	return &fight.ClearSessionResponse{
+		Msg: "data cleared",
+	}, nil
+}
+
 // Admin ...
 func (s *Service) Admin(stream fight.FightSvc_AdminServer) error {
 	var f = func() error {
