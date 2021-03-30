@@ -6,8 +6,8 @@ CREATE TABLE Hero (
     Blood int
 );
 
-INSERT INTO Hero VALUES ('Charlie', 'This is hero Charlie, coll!', 20, 10, 100);
-INSERT INTO Hero VALUES ('James', 'This is hero James, cool', 10, 30, 100);
+INSERT INTO Hero VALUES ('PostgreSql', 'Undisputed master of opensource RDBMS power in the world. An ancient RDBMS warrior, but the old power nourishes the living, this is the great cycle of being', 50, 30, 100);
+INSERT INTO Hero VALUES ('EDB', 'EDB, the greatest RDBMS warrior who inherits power of Postgresql, master of enterprise and cloud, reacts to combat situations with superhuman agility and spirit', 80, 60, 200);
 
 
 CREATE TABLE Boss (
@@ -19,8 +19,12 @@ CREATE TABLE Boss (
     Level int UNIQUE
 );
 
-INSERT INTO Boss VALUES ('Boss1','This is Boss1, cool!', 20, 5, 100, 1);
-INSERT INTO Boss VALUES ('Boss2','This is Boss2, cool!', 15, 10, 100, 2);
+INSERT INTO Boss VALUES ('Oracle','The great evil spawned in 1980s last century, the lord of expensive, he is still domains the burning commercial RDBM hell', 80, 50, 200, 4);
+INSERT INTO Boss VALUES ('Db2','One of oldest prime commercial evil, although his essence has been corrupted on open platform and he is banished to the unfathomable mainframe Abyss, but his power over terror left him incapable of feeling fear.', 60, 50, 150, 3);
+INSERT INTO Boss VALUES ('MySQL','Was once the leader of opensource RDBMs Council, but he swore allegiance to Oracle later on. Much uncertainty surrounds him, his departure created a colossals fracture within the opensource council', 40, 40, 100, 2);
+INSERT INTO Boss VALUES ('SQLServer','A son of great evil Microsoft, Lord of Windows realm, was so pervasive that even after he had been defeated by Linux angels in the enterprise territorial war', 40, 30, 100, 1);
+
+
 
 CREATE TABLE Session(
     UID varchar(100) primary key,
