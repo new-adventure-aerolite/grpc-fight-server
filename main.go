@@ -10,7 +10,6 @@ import (
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/jaeger_service"
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/service"
 	_ "github.com/lib/pq"
-	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"k8s.io/klog"
 )
@@ -29,12 +28,10 @@ func main() {
 	// init tracer
 	var servOpts []grpc.ServerOption
 	// new jaeger tracer
-	tracer, _, err := jaeger_service.NewJaegerTracer("grpc-fight-server", "jaeger-collector.istio-system.svc.cluster.local:14268")
+	tracer, _, err := jaeger_service.NewJaegerTracer("fight-server-backend", "jaeger-collector.istio-system.svc.cluster.local:14268")
 	if err != nil {
 		klog.Fatal(err)
 	}
-
-	opentracing.SetGlobalTracer(tracer)
 
 	servOpts = append(servOpts, jaeger_service.ServerOption(tracer))
 
