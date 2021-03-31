@@ -523,7 +523,6 @@ func loadSessionViewFromdb(db *sql.DB, ctx context.Context, tracer opentracing.T
 	var ssView = module.SessionView{}
 	var childSpan opentracing.Span
 
-	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
 		childSpan = tracer.StartSpan("SQL SELECT FROM session_view", opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCServer.Set(childSpan)
