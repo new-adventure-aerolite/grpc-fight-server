@@ -326,7 +326,7 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 
 	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		span := s.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
+		span := s.tracer.StartSpan("SQL SELECT FROM session_view", opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCServer.Set(span)
 		tags.PeerService.Set(span, "postgresql")
 		// #nosec
@@ -432,9 +432,8 @@ func (s *Service) insertHero(hero *fight.Hero) (string, error) {
 }
 
 func (s *Service) removeSessionFromDB(id string, ctx context.Context) error {
-	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		childSpan := s.tracer.StartSpan("SQL DELETE", opentracing.ChildOf(span.Context()))
+		childSpan := s.tracer.StartSpan("SQL DELETE FROM session", opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCServer.Set(childSpan)
 		tags.PeerService.Set(childSpan, "postgresql")
 		childSpan.SetTag("sql.query", "DELETE FROM session where uid = "+id)
@@ -447,13 +446,12 @@ func (s *Service) removeSessionFromDB(id string, ctx context.Context) error {
 }
 
 func (s *Service) archive(session module.Session, ctx context.Context) error {
-	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		span := s.tracer.StartSpan("SQL INSERT", opentracing.ChildOf(span.Context()))
-		tags.SpanKindRPCServer.Set(span)
-		tags.PeerService.Set(span, "postgresql")
-		span.SetTag("sql.query", "INSERT INTO session(uid, heroname, heroblood, bossblood, currentlevel, score, archivedate) VALUES...")
-		defer span.Finish()
+		childSpan := s.tracer.StartSpan("SQL INSERT TO session", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(childSpan)
+		tags.PeerService.Set(childSpan, "postgresql")
+		childSpan.SetTag("sql.query", "INSERT INTO session(uid, heroname, heroblood, bossblood, currentlevel, score, archivedate) VALUES...")
+		defer childSpan.Finish()
 	}
 
 	sqlStatement := `INSERT INTO session(uid, heroname, heroblood, bossblood, currentlevel, score, archivedate) VALUES($1, $2, $3, $4, $5, $6, $7) ON conflict (uid) DO UPDATE SET heroblood = $8, bossblood = $9, currentlevel = $10, score = $11, archivedate = $12;`
@@ -475,13 +473,12 @@ func (s *Service) archive(session module.Session, ctx context.Context) error {
 }
 
 func (s *Service) loadHeroFromDB(heroName string, ctx context.Context) (module.Hero, error) {
-	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		span := s.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
-		tags.SpanKindRPCServer.Set(span)
-		tags.PeerService.Set(span, "postgresql")
-		span.SetTag("sql.query", fmt.Sprintf("SELECT * FROM hero WHERE name = '%s';", heroName))
-		defer span.Finish()
+		childSpan := s.tracer.StartSpan("SQL SELECT FROM hero", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(childSpan)
+		tags.PeerService.Set(childSpan, "postgresql")
+		childSpan.SetTag("sql.query", fmt.Sprintf("SELECT * FROM hero WHERE name = '%s';", heroName))
+		defer childSpan.Finish()
 	}
 
 	var h = module.Hero{}
@@ -496,13 +493,12 @@ func (s *Service) loadHeroFromDB(heroName string, ctx context.Context) (module.H
 }
 
 func (s *Service) loadBossFromDB(level int, ctx context.Context) (module.Boss, error) {
-	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		span := s.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
-		tags.SpanKindRPCServer.Set(span)
-		tags.PeerService.Set(span, "postgresql")
-		span.SetTag("sql.query", fmt.Sprintf("SELECT * FROM boss WHERE level = %d;", level))
-		defer span.Finish()
+		childSpan := s.tracer.StartSpan("SQL SELECT FROM boss", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(childSpan)
+		tags.PeerService.Set(childSpan, "postgresql")
+		childSpan.SetTag("sql.query", fmt.Sprintf("SELECT * FROM boss WHERE level = %d;", level))
+		defer childSpan.Finish()
 	}
 
 	var b = module.Boss{}

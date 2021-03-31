@@ -28,7 +28,6 @@ func NewJaegerTracer(serviceName string, jaegerHostPort string) (opentracing.Tra
 	var closer io.Closer
 	var err error
 
-	//
 	propagator := zipkin.NewZipkinB3HTTPHeaderPropagator()
 	tracer, closer := jaeger.NewTracer(
 		serviceName,
@@ -36,10 +35,11 @@ func NewJaegerTracer(serviceName string, jaegerHostPort string) (opentracing.Tra
 		jaeger.NewRemoteReporter(transport.NewHTTPTransport("http://"+jaegerHostPort+"/api/traces?format=jaeger.thrift")),
 		jaeger.TracerOptions.Injector(opentracing.HTTPHeaders, propagator),
 		jaeger.TracerOptions.Extractor(opentracing.HTTPHeaders, propagator),
-		jaeger.TracerOptions.ZipkinSharedRPCSpan(true),
+		//jaeger.TracerOptions.ZipkinSharedRPCSpan(true),
+		// Reminder: We didn't set True here bc we want to create a new child
+		//           span when receive the RPC request.
 	)
 	Tracer = tracer
-	//
 
 	if err != nil {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
