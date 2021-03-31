@@ -324,63 +324,16 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 	}
 
 	var ssView = module.SessionView{}
-	var childSpan opentracing.Span
 
-	// simulate opentracing instrumentation of an SQL query
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		childSpan = s.tracer.StartSpan("SQL SELECT FROM session_view", opentracing.ChildOf(span.Context()))
-		tags.SpanKindRPCServer.Set(childSpan)
-		tags.PeerService.Set(childSpan, "postgresql")
-		childSpan.SetTag("sql.query", "SELECT * FROM session_view WHERE sessionid = "+id)
-		// ctx = opentracing.ContextWithSpan(ctx, span)
-	}
+	ssView, err = loadSessionViewFromdb(s.db, ctx, s.tracer, id)
 
-	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM session_view WHERE sessionid = '%s';", id))
 	if err != nil {
-		childSpan.SetTag("error", true)
-		childSpan.LogFields(
-			log.String("event", fmt.Sprint(err)),
-			log.String("type", "database query error"),
-		)
-		childSpan.Finish()
 		return &fight.SessionView{}, err
 	}
-	defer rows.Close()
 
-	if rows.Next() {
-		err = rows.Scan(
-			&ssView.Session.UID,
-			&ssView.Session.HeroName,
-			&ssView.Hero.Detail,
-			&ssView.Hero.AttackPower,
-			&ssView.Hero.DefensePower,
-			&ssView.Hero.Blood,
-			&ssView.Session.LiveHeroBlood,
-			&ssView.Session.LiveBossBlood,
-			&ssView.Session.CurrentLevel,
-			&ssView.Session.Score,
-			&ssView.Session.ArchiveDate,
-			&ssView.Boss.Name,
-			&ssView.Boss.Detail,
-			&ssView.Boss.AttackPower,
-			&ssView.Boss.DefensePower,
-			&ssView.Boss.Blood,
-		)
-
-		if err != nil {
-			childSpan.SetTag("error", true)
-			childSpan.LogFields(
-				log.String("event", fmt.Sprint(err)),
-				log.String("type", "database scan error"),
-			)
-			childSpan.Finish()
-			return &fight.SessionView{}, err
-		}
-
+	if (ssView == module.SessionView{}) {
 		ssView.Hero.Name = ssView.Session.HeroName
 		ssView.Boss.Level = ssView.Session.CurrentLevel
-		childSpan.Finish()
-
 	} else {
 		fmt.Printf("session view is not found in the db: id: '%s'\n", id)
 		bossLevel1, err := s.loadBossFromDB(1, ctx)
@@ -564,4 +517,62 @@ func convertModuleHero2FightHero(hero module.Hero) *fight.Hero {
 		DefensePower: int32(hero.DefensePower),
 		Blood:        int32(hero.Blood),
 	}
+}
+
+func loadSessionViewFromdb(db *sql.DB, ctx context.Context, tracer opentracing.Tracer, id string) (module.SessionView, error) {
+	var ssView = module.SessionView{}
+	var childSpan opentracing.Span
+
+	// simulate opentracing instrumentation of an SQL query
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		childSpan = tracer.StartSpan("SQL SELECT FROM session_view", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(childSpan)
+		tags.PeerService.Set(childSpan, "postgresql")
+		childSpan.SetTag("sql.query", "SELECT * FROM session_view WHERE sessionid = "+id)
+		// ctx = opentracing.ContextWithSpan(ctx, span)
+		defer childSpan.Finish()
+	}
+
+	rows, err := db.Query(fmt.Sprintf("SELECT * FROM session_view WHERE sessionid = '%s';", id))
+	if err != nil {
+		childSpan.SetTag("error", true)
+		childSpan.LogFields(
+			log.String("event", fmt.Sprint(err)),
+			log.String("type", "database query error"),
+		)
+		return ssView, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		err = rows.Scan(
+			&ssView.Session.UID,
+			&ssView.Session.HeroName,
+			&ssView.Hero.Detail,
+			&ssView.Hero.AttackPower,
+			&ssView.Hero.DefensePower,
+			&ssView.Hero.Blood,
+			&ssView.Session.LiveHeroBlood,
+			&ssView.Session.LiveBossBlood,
+			&ssView.Session.CurrentLevel,
+			&ssView.Session.Score,
+			&ssView.Session.ArchiveDate,
+			&ssView.Boss.Name,
+			&ssView.Boss.Detail,
+			&ssView.Boss.AttackPower,
+			&ssView.Boss.DefensePower,
+			&ssView.Boss.Blood,
+		)
+
+		if err != nil {
+			childSpan.SetTag("error", true)
+			childSpan.LogFields(
+				log.String("event", fmt.Sprint(err)),
+				log.String("type", "database scan error"),
+			)
+			return ssView, err
+		}
+	}
+
+	return ssView, nil
 }
