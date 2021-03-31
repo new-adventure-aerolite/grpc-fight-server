@@ -323,23 +323,25 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 	}
 
 	var ssView = module.SessionView{}
+	var childSpan opentracing.Span
 
 	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		span := s.tracer.StartSpan("SQL SELECT FROM session_view", opentracing.ChildOf(span.Context()))
-		tags.SpanKindRPCServer.Set(span)
-		tags.PeerService.Set(span, "postgresql")
-		// #nosec
-		span.SetTag("sql.query", "SELECT * FROM session_view WHERE sessionid = "+id)
-		defer span.Finish()
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		childSpan = s.tracer.StartSpan("SQL SELECT FROM session_view", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(childSpan)
+		tags.PeerService.Set(childSpan, "postgresql")
+		childSpan.SetTag("sql.query", "SELECT * FROM session_view WHERE sessionid = "+id)
+		// ctx = opentracing.ContextWithSpan(ctx, span)
 	}
 
 	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM session_view WHERE sessionid = '%s';", id))
 	if err != nil {
-		if span := opentracing.SpanFromContext(ctx); span != nil {
-			tags.Error.Set(span, true)
-		}
+		childSpan.SetTag("error", true)
+		childSpan.LogFields(
+			log.String("event", err),
+			log.String("type", "database query error")
+		)
+		childSpan.Finish()
 		return &fight.SessionView{}, err
 	}
 	defer rows.Close()
@@ -365,11 +367,18 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 		)
 
 		if err != nil {
+			childSpan.SetTag("error", true)
+			childSpan.LogFields(
+				log.String("event", err),
+				log.String("type", "database scan error")
+			)
+			childSpan.Finish()
 			return &fight.SessionView{}, err
 		}
 
 		ssView.Hero.Name = ssView.Session.HeroName
 		ssView.Boss.Level = ssView.Session.CurrentLevel
+		childSpan.Finish()
 
 	} else {
 		fmt.Printf("session view is not found in the db: id: '%s'\n", id)
