@@ -2,16 +2,15 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
-	"os"
 
 	"github.com/TianqiuHuang/grpc-fight-app/pd/fight"
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/connection"
+	"github.com/TianqiuHuang/grpc-fight-app/pkg/jaeger_service"
 	"github.com/TianqiuHuang/grpc-fight-app/pkg/service"
 	_ "github.com/lib/pq"
-	gtrace "github.com/moxiaomomo/grpc-jaeger"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"k8s.io/klog"
 )
@@ -29,14 +28,15 @@ func main() {
 
 	// init tracer
 	var servOpts []grpc.ServerOption
-	tracer, _, err := gtrace.NewJaegerTracer("fightServer", "127.0.0.1:6831")
+	// new jaeger tracer
+	tracer, _, err := jaeger_service.NewJaegerTracer("grpc-fight-server", "jaeger-collector.istio-system.svc.cluster.local:14268")
 	if err != nil {
-		fmt.Printf("new tracer err: %+v\n", err)
-		os.Exit(-1)
+		klog.Fatal(err)
 	}
-	if tracer != nil {
-		servOpts = append(servOpts, gtrace.ServerOption(tracer))
-	}
+
+	opentracing.SetGlobalTracer(tracer)
+
+	servOpts = append(servOpts, jaeger_service.ServerOption(tracer))
 
 	// hold the connection to the pg
 	db, listener, err := connection.Create(config)

@@ -60,7 +60,7 @@ type Event struct {
 func (s *Service) ClearSession(ctx context.Context, req *fight.ClearSessionRequest) (*fight.ClearSessionResponse, error) {
 	id := req.GetId()
 	sessionStore.Remove(id)
-	if err := s.removeSessionFromDB(id); err != nil {
+	if err := s.removeSessionFromDB(id, ctx); err != nil {
 		return &fight.ClearSessionResponse{}, err
 	}
 	return &fight.ClearSessionResponse{
@@ -161,7 +161,7 @@ func (s *Service) Game(ctx context.Context, req *fight.GameRequest) (*fight.Game
 	switch eventType {
 	case fight.Type_ARCHIVE:
 		session := sv.Session
-		if err = s.archive(session); err != nil {
+		if err = s.archive(session, ctx); err != nil {
 			return &fight.GameResponse{}, err
 		}
 		return &fight.GameResponse{
@@ -205,7 +205,7 @@ func (s *Service) Game(ctx context.Context, req *fight.GameRequest) (*fight.Game
 				},
 			}
 			sessionStore.Remove(id)
-			if err = s.removeSessionFromDB(id); err != nil {
+			if err = s.removeSessionFromDB(id, ctx); err != nil {
 				return &fight.GameResponse{}, err
 			}
 		} else if sv.Session.LiveBossBlood <= 0 {
@@ -240,7 +240,7 @@ func (s *Service) Game(ctx context.Context, req *fight.GameRequest) (*fight.Game
 		return resp, nil
 
 	case fight.Type_LEVEL:
-		boss, err := s.loadBossFromDB(sv.CurrentLevel + 1)
+		boss, err := s.loadBossFromDB(sv.CurrentLevel+1, ctx)
 		if err != nil {
 			return &fight.GameResponse{}, err
 		}
@@ -262,7 +262,7 @@ func (s *Service) Game(ctx context.Context, req *fight.GameRequest) (*fight.Game
 
 	case fight.Type_QUIT:
 		session := sv.Session
-		if err = s.archive(session); err != nil {
+		if err = s.archive(session, ctx); err != nil {
 			return &fight.GameResponse{}, err
 		}
 		sessionStore.Remove(id)
@@ -287,7 +287,7 @@ func (s *Service) SelectHero(ctx context.Context, req *fight.SelectHeroRequest) 
 		heroName = req.GetHeroName()
 	)
 
-	hero, err := s.loadHeroFromDB(heroName)
+	hero, err := s.loadHeroFromDB(heroName, ctx)
 	if err != nil {
 		return &fight.SessionView{}, err
 	}
@@ -373,7 +373,7 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 
 	} else {
 		fmt.Printf("session view is not found in the db: id: '%s'\n", id)
-		bossLevel1, err := s.loadBossFromDB(1)
+		bossLevel1, err := s.loadBossFromDB(1, ctx)
 		if err != nil {
 			return &fight.SessionView{}, err
 		}
@@ -431,13 +431,31 @@ func (s *Service) insertHero(hero *fight.Hero) (string, error) {
 	return name, err
 }
 
-func (s *Service) removeSessionFromDB(id string) error {
+func (s *Service) removeSessionFromDB(id string, ctx context.Context) error {
+	// simulate opentracing instrumentation of an SQL query
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		childSpan := s.tracer.StartSpan("SQL DELETE", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(childSpan)
+		tags.PeerService.Set(childSpan, "postgresql")
+		childSpan.SetTag("sql.query", "DELETE FROM session where uid = "+id)
+		defer childSpan.Finish()
+	}
+
 	sqlStatement := "DELETE FROM session where uid = $1;"
 	_, err := s.db.Exec(sqlStatement, id)
 	return err
 }
 
-func (s *Service) archive(session module.Session) error {
+func (s *Service) archive(session module.Session, ctx context.Context) error {
+	// simulate opentracing instrumentation of an SQL query
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span := s.tracer.StartSpan("SQL INSERT", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(span)
+		tags.PeerService.Set(span, "postgresql")
+		span.SetTag("sql.query", "INSERT INTO session(uid, heroname, heroblood, bossblood, currentlevel, score, archivedate) VALUES...")
+		defer span.Finish()
+	}
+
 	sqlStatement := `INSERT INTO session(uid, heroname, heroblood, bossblood, currentlevel, score, archivedate) VALUES($1, $2, $3, $4, $5, $6, $7) ON conflict (uid) DO UPDATE SET heroblood = $8, bossblood = $9, currentlevel = $10, score = $11, archivedate = $12;`
 	_, err := s.db.Exec(sqlStatement,
 		session.UID,
@@ -456,7 +474,16 @@ func (s *Service) archive(session module.Session) error {
 	return err
 }
 
-func (s *Service) loadHeroFromDB(heroName string) (module.Hero, error) {
+func (s *Service) loadHeroFromDB(heroName string, ctx context.Context) (module.Hero, error) {
+	// simulate opentracing instrumentation of an SQL query
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span := s.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(span)
+		tags.PeerService.Set(span, "postgresql")
+		span.SetTag("sql.query", fmt.Sprintf("SELECT * FROM hero WHERE name = '%s';", heroName))
+		defer span.Finish()
+	}
+
 	var h = module.Hero{}
 	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM hero WHERE name = '%s';", heroName))
 	if err != nil {
@@ -468,7 +495,16 @@ func (s *Service) loadHeroFromDB(heroName string) (module.Hero, error) {
 	return h, err
 }
 
-func (s *Service) loadBossFromDB(level int) (module.Boss, error) {
+func (s *Service) loadBossFromDB(level int, ctx context.Context) (module.Boss, error) {
+	// simulate opentracing instrumentation of an SQL query
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span := s.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCServer.Set(span)
+		tags.PeerService.Set(span, "postgresql")
+		span.SetTag("sql.query", fmt.Sprintf("SELECT * FROM boss WHERE level = %d;", level))
+		defer span.Finish()
+	}
+
 	var b = module.Boss{}
 	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM boss WHERE level = %d;", level))
 	if err != nil {

@@ -4,7 +4,7 @@ WORKDIR /go/src
 COPY . .
 RUN go env -w GOPROXY=https://goproxy.cn,direct
 # RUN go mod tidy && go mod vendor
-RUN CGO_ENABLED=0 GOOS=linux go build -o fight-server
+RUN CGO_ENABLED=0 GOOS=linux go build -o fight-server -mod vendor
 
 FROM alpine:latest
 COPY --from=builder /go/src/config/config.json /etc/config/config.json
