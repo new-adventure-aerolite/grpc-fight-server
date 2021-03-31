@@ -14,6 +14,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/opentracing/opentracing-go"
 	tags "github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"k8s.io/klog"
 )
@@ -338,8 +339,8 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 	if err != nil {
 		childSpan.SetTag("error", true)
 		childSpan.LogFields(
-			log.String("event", err),
-			log.String("type", "database query error")
+			log.String("event", fmt.Sprint(err)),
+			log.String("type", "database query error"),
 		)
 		childSpan.Finish()
 		return &fight.SessionView{}, err
@@ -369,8 +370,8 @@ func (s *Service) LoadSession(ctx context.Context, req *fight.LoadSessionRequest
 		if err != nil {
 			childSpan.SetTag("error", true)
 			childSpan.LogFields(
-				log.String("event", err),
-				log.String("type", "database scan error")
+				log.String("event", fmt.Sprint(err)),
+				log.String("type", "database scan error"),
 			)
 			childSpan.Finish()
 			return &fight.SessionView{}, err
