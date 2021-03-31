@@ -6,7 +6,7 @@ import (
 
 	"sync"
 
-	"github.com/TianqiuHuang/grpc-fight-app/pkg/module"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pkg/module"
 )
 
 // ErrorNotFound ...

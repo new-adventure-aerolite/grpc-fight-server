@@ -9,9 +9,9 @@ import (
 
 	"sync"
 
-	"github.com/TianqiuHuang/grpc-fight-app/pd/fight"
-	"github.com/TianqiuHuang/grpc-fight-app/pkg/module"
 	"github.com/lib/pq"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pd/fight"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pkg/module"
 	"github.com/opentracing/opentracing-go"
 	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"

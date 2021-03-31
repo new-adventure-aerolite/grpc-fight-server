@@ -1,4 +1,4 @@
-module github.com/TianqiuHuang/grpc-fight-app
+module github.com/new-adventure-aerolite/grpc-fight-server
 
 go 1.14
 

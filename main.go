@@ -5,11 +5,11 @@ import (
 	"log"
 	"net"
 
-	"github.com/TianqiuHuang/grpc-fight-app/pd/fight"
-	"github.com/TianqiuHuang/grpc-fight-app/pkg/connection"
-	"github.com/TianqiuHuang/grpc-fight-app/pkg/jaeger_service"
-	"github.com/TianqiuHuang/grpc-fight-app/pkg/service"
 	_ "github.com/lib/pq"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pd/fight"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pkg/connection"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pkg/jaeger_service"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pkg/service"
 	"google.golang.org/grpc"
 	"k8s.io/klog"
 )

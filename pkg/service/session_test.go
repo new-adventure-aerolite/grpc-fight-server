@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/TianqiuHuang/grpc-fight-app/pkg/module"
+	"github.com/new-adventure-aerolite/grpc-fight-server/pkg/module"
 )
 
 func TestDelete(t *testing.T) {
