@@ -7,7 +7,7 @@ CREATE TABLE Hero (
 );
 
 INSERT INTO Hero VALUES ('PostgreSql', 'Undisputed master of opensource RDBMS power in the world. An ancient RDBMS warrior, but the old power nourishes the living, this is the great cycle of being', 50, 30, 100);
-INSERT INTO Hero VALUES ('EDB', 'EDB, the greatest RDBMS warrior who inherits power of Postgresql, master of enterprise and cloud, reacts to combat situations with superhuman agility and spirit', 80, 60, 200);
+INSERT INTO Hero VALUES ('PostgreSql Advanced Server', 'PostgreSql Advanced Server, the greatest RDBMS warrior who inherits power of Postgresql, master of enterprise and cloud, reacts to combat situations with superhuman agility and spirit', 80, 60, 200);
 
 
 CREATE TABLE Boss (
