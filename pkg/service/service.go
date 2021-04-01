@@ -182,6 +182,7 @@ func (s *Service) Game(ctx context.Context, req *fight.GameRequest) (*fight.Game
 		if sv.Hero.AttackPower >= sv.Boss.DefensePower {
 			sv.Session.LiveBossBlood -= (sv.Hero.AttackPower - sv.Boss.DefensePower)
 		}
+		sv.Session.LiveBossBlood -= sv.Hero.AttackPower
 		// sv.Session.LiveHeroBlood -= sv.Boss.AttackPower
 		// sv.Session.LiveBossBlood -= sv.Hero.AttackPower
 		sv.Score += 10
