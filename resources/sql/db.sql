@@ -1,5 +1,5 @@
 CREATE TABLE Hero (
-    Name varchar(20) PRIMARY KEY,
+    Name varchar(50) PRIMARY KEY,
     Detail text check (length(Detail) > 8),
     AttackPower int,
     DefensePower int,
@@ -28,7 +28,7 @@ INSERT INTO Boss VALUES ('SQLServer','A son of great evil Microsoft, Lord of Win
 
 CREATE TABLE Session(
     UID varchar(100) primary key,
-    HeroName varchar(20) references hero(name),
+    HeroName varchar(50) references hero(name),
     HeroBlood int,
     BossBlood int,
     CurrentLevel int references boss(level),
